@@ -15,6 +15,7 @@ function:
         path: /search
         method: get
   environment:
+    REGION: ${self:provider.region}
     REDSHIFT_HOST: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/host}
     REDSHIFT_PORT: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/port~true}
     REDSHIFT_USER: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/user~true}

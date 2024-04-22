@@ -25,7 +25,6 @@ provider:
         - ec2:UnassignPrivateIpAddresses
       Resource: '*'
   environment:
-    REGION: ${self:provider.region}
     STAGE: ${self:provider.stage}
     ERROR_SNS_TOPIC_ARN: ${ssm:/omni-reports/${self:provider.stage}/error-notification/sns/arn}
 
