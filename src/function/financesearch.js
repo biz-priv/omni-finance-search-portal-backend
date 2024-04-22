@@ -203,7 +203,7 @@ exports.handler = async (event) => {
     const offset = (parseInt(Page, 10) - 1) * (PageSize || 10) || 0;
 
     // Construct the WHERE clause based on the provided parameters
-    const whereConditions = [];
+    const whereConditions = ['a.is_deleted = \'N\''];
 
     if (SourceSystem) {
       whereConditions.push(`a."source system" = '${SourceSystem}'`);
@@ -219,10 +219,7 @@ exports.handler = async (event) => {
     let whereClause = '';
     if (whereConditions.length > 0) {
       whereClause = `WHERE ${whereConditions.join(' AND ')}`;
-    } else {
-      // If no parameters are provided, use default conditions
-      whereClause = 'WHERE a.is_deleted = \'N\' AND a."invoice date" IS NOT NULL';
-    }
+    } 
 
     // Define the Redshift connection parameters
     const redshiftParams = {
@@ -248,8 +245,14 @@ exports.handler = async (event) => {
       AND a."file number" = b."file number"
       ${whereClause}`;
 
-    // Execute the count query
-    const countResult = await redshiftClient.query(countQuery);
+    // Execute the count query as a promise
+    const countResult = await new Promise((resolve, reject) => {
+      redshiftClient.query(countQuery, (err, res) => {
+        if (err) reject(err);
+        else resolve(res);
+      });
+    });
+
     const totalItems = parseInt(countResult.rows[0].totalItems, 10);
 
     // Construct the SQL query with the dynamic WHERE clause, sorting, and pagination
