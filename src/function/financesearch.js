@@ -2,6 +2,7 @@
 'use strict';
 const AWS = require('aws-sdk');
 const { Client } = require('pg');
+const { v4: uuidv4 } = require('uuid');
 
 function toPascalCase(obj) {
   if (typeof obj !== 'object' || obj === null) {
@@ -79,6 +80,24 @@ exports.handler = async (event) => {
 
     // Connect to the Redshift cluster
     await redshiftClient.connect();
+        // Construct the SQL query to count total items
+        const countQuery = `
+        SELECT COUNT(*) AS totalItems
+        FROM datamart.ap_invoices a
+        JOIN datamart.shipment_extract b
+        ON a."source system" = b."source system"
+        AND a."file number" = b."file number"
+        ${whereClause}`;
+  
+      // Execute the count query as a promise
+  const countResult = await new Promise((resolve, reject) => {
+    redshiftClient.query(countQuery, (err, res) => {
+      if (err) reject(err);
+      else resolve(res);
+    });
+  });
+  
+  const totalItems = parseInt(countResult.rows[0].totalitems, 10);
 
     // Construct the SQL query with the dynamic WHERE clause, sorting, and pagination
     const sqlQuery = `
@@ -130,10 +149,16 @@ exports.handler = async (event) => {
     // Execute the SQL query
     const result = await redshiftClient.query(sqlQuery);
     const formattedResults = result.rows;
-    const totalCount = formattedResults.length;
+    for (const row of result.rows) {
+      const formattedRow = { ...toPascalCase(row) };
+      formattedRow.uniqueId = uuidv4(); // Generate UUID for each row
+      formattedResults.push(formattedRow);
+  }
 
-    // Calculate total number of pages
-    const totalPage = Math.ceil(totalCount / (PageSize || 10));
+  // Calculate total number of pages
+  const totalPage = Math.ceil(totalItems / 10);
+
+
 
     const pascalCaseResults = toPascalCase(formattedResults);
 
@@ -147,6 +172,7 @@ exports.handler = async (event) => {
         currentPage: parseInt(Page, 10) || 1,
         totalPage,
         size: formattedResults.length,
+        totalItems,
       }),
     };
   } catch (error) {
