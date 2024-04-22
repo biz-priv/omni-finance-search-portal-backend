@@ -6,29 +6,29 @@ exports.handler = async (event) => {
   try {
     // Extract input parameters from the API request
     const {
-      sourceSystem,
-      fileNumber,
-      createdDate,
-      page,
-      pageSize,
-      sortBy,
-      ascending = false,
+      SourceSystem,
+      FileNumber,
+      CreatedDate,
+      Page,
+      PageSize,
+      SortBy,
+      Ascending = false,
     } = event.queryStringParameters || {};
 
     // Calculate the offset based on the page number and page size
-    const offset = (page - 1) * (pageSize || 10) || 0;
+    const offset = (Page - 1) * (PageSize || 10) || 0;
 
     // Construct the WHERE clause based on the provided parameters
     const whereConditions = [];
 
-    if (sourceSystem) {
-      whereConditions.push(`a."source system" = '${sourceSystem}'`);
+    if (SourceSystem) {
+      whereConditions.push(`a."source system" = '${SourceSystem}'`);
     }
-    if (fileNumber) {
-      whereConditions.push(`a."file number" = '${fileNumber}'`);
+    if (FileNumber) {
+      whereConditions.push(`a."file number" = '${FileNumber}'`);
     }
-    if (createdDate) {
-      whereConditions.push(`a."file date" = '${createdDate}'`);
+    if (CreatedDate) {
+      whereConditions.push(`a."file date" = '${CreatedDate}'`);
     }
 
     // Construct the WHERE clause string
@@ -96,9 +96,9 @@ exports.handler = async (event) => {
                 AND a."file number" = b."file number"
             ${whereClause}
             ORDER BY
-                ${sortBy || 'a."invoice date"'} ${ascending ? 'ASC' : 'DESC'}
+                ${SortBy || 'a."invoice date"'} ${Ascending ? 'ASC' : 'DESC'}
             LIMIT
-                ${pageSize || 10}  -- Default page size is 10
+                ${PageSize || 10}  -- Default page size is 10
             OFFSET
                 ${offset}`;
 
