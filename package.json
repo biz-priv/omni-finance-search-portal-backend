@@ -29,7 +29,8 @@
     "aws-sdk": "^2.1603.0",
     "lodash": "^4.17.21",
     "moment-timezone": "^0.5.45",
-    "pg": "^8.11.5"
+    "pg": "^8.11.5",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.4.4",
