@@ -16,6 +16,8 @@ function:
         method: get
   environment:
     REGION: ${self:provider.region}
+    STAGE: ${self:provider.stage}
+    ERROR_SNS_TOPIC_ARN: ${ssm:/omni-reports/${self:provider.stage}/error-notification/sns/arn}
     REDSHIFT_HOST: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/host}
     REDSHIFT_PORT: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/port~true}
     REDSHIFT_USER: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/user~true}
