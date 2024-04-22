@@ -19,7 +19,7 @@ function:
     STAGE: ${self:provider.stage}
     ERROR_SNS_TOPIC_ARN: ${ssm:/omni-reports/${self:provider.stage}/error-notification/sns/arn}
     REDSHIFT_HOST: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/host}
-    REDSHIFT_PORT: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/port~true}
-    REDSHIFT_USER: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/user~true}
-    REDSHIFT_PASSWORD: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/password~true}
-    REDSHIFT_DATABASE: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/database~true}
+    REDSHIFT_PORT: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/port}
+    REDSHIFT_USER: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/user}
+    REDSHIFT_PASSWORD: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/password}
+    REDSHIFT_DATABASE: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/database}
