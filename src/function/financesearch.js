@@ -2,6 +2,24 @@
 const AWS = require('aws-sdk');
 const { Client } = require('pg');
 
+function toPascalCase(obj) {
+  if (typeof obj !== 'object' || obj === null) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => toPascalCase(item));
+  }
+
+  return Object.keys(obj).reduce((acc, key) => {
+    const pascalKey = key.replace(/(\w)(\w*)/g, (match, firstChar, rest) => {
+      return firstChar.toUpperCase() + rest.toLowerCase();
+    });
+    acc[pascalKey] = toPascalCase(obj[key]);
+    return acc;
+  }, {});
+}
+
 exports.handler = async (event) => {
   try {
     // Extract input parameters from the API request
@@ -106,12 +124,14 @@ exports.handler = async (event) => {
     const result = await redshiftClient.query(sqlQuery);
     const formattedResults = result.rows;
 
+    const pascalCaseResults = toPascalCase(formattedResults);
+
     // Close the connection to the Redshift cluster
     await redshiftClient.end();
 
     return {
       statusCode: 200,
-      body: JSON.stringify(formattedResults),
+      body: JSON.stringify(pascalCaseResults),
     };
   } catch (error) {
     console.error('Error:', error);
