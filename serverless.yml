@@ -1,4 +1,4 @@
-service: service-name # Change this to your service name
+service: omni-finance-search-portal # Change this to your service name
 
 provider:
   name: aws
@@ -37,6 +37,7 @@ package:
   individually: true
 
 functions:
+  omni-finance-search: ${file(config/functions/financesearch.yml):function}
 
 layers:
   NodeModules:

@@ -1,0 +1,22 @@
+---
+function:
+  name: financesearch-${self:provider.stage}
+  handler: src/function/financesearch.handler
+  memorySize: 2048
+  timeout: 900
+  layers:
+    - !Ref NodeModulesLambdaLayer
+  package:
+    patterns:
+      - '!**/*'
+      - src/function/financesearch.js
+  events:
+    - http:
+        path: /search
+        method: get
+  environment:
+    REDSHIFT_HOST: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/host}
+    REDSHIFT_PORT: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/port~true}
+    REDSHIFT_USER: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/user~true}
+    REDSHIFT_PASSWORD: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/password~true}
+    REDSHIFT_DATABASE: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/database~true}
