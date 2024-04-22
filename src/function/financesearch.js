@@ -19,6 +19,7 @@ const { Client } = require('pg');
 //     return acc;
 //   }, {});
 // }
+
 function toPascalCase(obj) {
   if (typeof obj !== 'object' || obj === null) {
     return obj;
@@ -32,7 +33,13 @@ function toPascalCase(obj) {
     const pascalKey = key.replace(/(\w)(\w*)/g, (match, firstChar, rest) => {
       return firstChar.toUpperCase() + rest.toLowerCase();
     }).replace(/\s+/g, ''); // Remove spaces between keys
-    acc[pascalKey] = key.includes('date') ? obj[key].toISOString() : toPascalCase(obj[key]); // Convert date and time values to ISO string
+    
+    let value = obj[key];
+    if (value instanceof Date) {
+      value = value.toISOString(); // Convert Date objects to ISO string
+    }
+    
+    acc[pascalKey] = toPascalCase(value); // Recursively apply toPascalCase
     return acc;
   }, {});
 }
