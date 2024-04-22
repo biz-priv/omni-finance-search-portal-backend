@@ -2,6 +2,23 @@
 const AWS = require('aws-sdk');
 const { Client } = require('pg');
 
+// function toPascalCase(obj) {
+//   if (typeof obj !== 'object' || obj === null) {
+//     return obj;
+//   }
+
+//   if (Array.isArray(obj)) {
+//     return obj.map(item => toPascalCase(item));
+//   }
+
+//   return Object.keys(obj).reduce((acc, key) => {
+//     const pascalKey = key.replace(/(\w)(\w*)/g, (match, firstChar, rest) => {
+//       return firstChar.toUpperCase() + rest.toLowerCase();
+//     });
+//     acc[pascalKey] = toPascalCase(obj[key]);
+//     return acc;
+//   }, {});
+// }
 function toPascalCase(obj) {
   if (typeof obj !== 'object' || obj === null) {
     return obj;
@@ -14,11 +31,12 @@ function toPascalCase(obj) {
   return Object.keys(obj).reduce((acc, key) => {
     const pascalKey = key.replace(/(\w)(\w*)/g, (match, firstChar, rest) => {
       return firstChar.toUpperCase() + rest.toLowerCase();
-    });
-    acc[pascalKey] = toPascalCase(obj[key]);
+    }).replace(/\s+/g, ''); // Remove spaces between keys
+    acc[pascalKey] = key.includes('date') ? obj[key].toISOString() : toPascalCase(obj[key]); // Convert date and time values to ISO string
     return acc;
   }, {});
 }
+
 
 exports.handler = async (event) => {
   try {
