@@ -1,3 +1,4 @@
+
 // 'use strict';
 // const AWS = require('aws-sdk');
 // const { Client } = require('pg');
@@ -26,7 +27,6 @@
 //   }, {});
 // }
 
-
 // exports.handler = async (event) => {
 //   try {
 //     // Extract input parameters from the API request
@@ -41,7 +41,7 @@
 //     } = event.queryStringParameters || {};
 
 //     // Calculate the offset based on the page number and page size
-//     const offset = (Page - 1) * (PageSize || 10) || 0;
+//     const offset = (parseInt(Page, 10) - 1) * (PageSize || 10) || 0;
 
 //     // Construct the WHERE clause based on the provided parameters
 //     const whereConditions = [];
@@ -130,6 +130,10 @@
 //     // Execute the SQL query
 //     const result = await redshiftClient.query(sqlQuery);
 //     const formattedResults = result.rows;
+//     const totalCount = formattedResults.length;
+
+//     // Calculate total number of pages
+//     const totalPage = Math.ceil(totalCount / (PageSize || 10));
 
 //     const pascalCaseResults = toPascalCase(formattedResults);
 
@@ -138,7 +142,12 @@
 
 //     return {
 //       statusCode: 200,
-//       body: JSON.stringify(pascalCaseResults),
+//       body: JSON.stringify({
+//         data: pascalCaseResults,
+//         currentPage: parseInt(Page, 10) || 1,
+//         totalPage,
+//         size: formattedResults.length,
+//       }),
 //     };
 //   } catch (error) {
 //     console.error('Error:', error);
@@ -148,7 +157,6 @@
 //     };
 //   }
 // };
-
 'use strict';
 const AWS = require('aws-sdk');
 const { Client } = require('pg');
@@ -230,6 +238,19 @@ exports.handler = async (event) => {
     // Connect to the Redshift cluster
     await redshiftClient.connect();
 
+    // Construct the SQL query to count total items
+    const countQuery = `
+      SELECT COUNT(*) AS totalItems
+      FROM datamart.ap_invoices a
+      JOIN datamart.shipment_extract b
+      ON a."source system" = b."source system"
+      AND a."file number" = b."file number"
+      ${whereClause}`;
+
+    // Execute the count query
+    const countResult = await redshiftClient.query(countQuery);
+    const totalItems = parseInt(countResult.rows[0].totalItems, 10);
+
     // Construct the SQL query with the dynamic WHERE clause, sorting, and pagination
     const sqlQuery = `
             SELECT
@@ -280,10 +301,9 @@ exports.handler = async (event) => {
     // Execute the SQL query
     const result = await redshiftClient.query(sqlQuery);
     const formattedResults = result.rows;
-    const totalCount = formattedResults.length;
 
     // Calculate total number of pages
-    const totalPage = Math.ceil(totalCount / (PageSize || 10));
+    const totalPage = Math.ceil(totalItems / (PageSize || 10));
 
     const pascalCaseResults = toPascalCase(formattedResults);
 
@@ -297,6 +317,7 @@ exports.handler = async (event) => {
         currentPage: parseInt(Page, 10) || 1,
         totalPage,
         size: formattedResults.length,
+        totalItems,
       }),
     };
   } catch (error) {
