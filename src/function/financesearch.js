@@ -104,30 +104,42 @@ exports.handler = async (event) => {
       OFFSET
         ${offset}`;
 
-    // Define promises for count query and main SQL query
-    const countPromise = new Promise((resolve, reject) => {
-      redshiftClient.query(countQuery, (err, res) => {
-        if (err) reject(err);
-        else resolve(res);
-      });
-    });
+    // // Define promises for count query and main SQL query
+    // const countPromise = new Promise((resolve, reject) => {
+    //   redshiftClient.query(countQuery, (err, res) => {
+    //     if (err) reject(err);
+    //     else resolve(res);
+    //   });
+    // });
 
-    const sqlPromise = new Promise((resolve, reject) => {
-      redshiftClient.query(sqlQuery, (err, res) => {
-        if (err) reject(err);
-        else resolve(res);
-      });
-    });
+    // const sqlPromise = new Promise((resolve, reject) => {
+    //   redshiftClient.query(sqlQuery, (err, res) => {
+    //     if (err) reject(err);
+    //     else resolve(res);
+    //   });
+    // });
 
-    // Execute both promises concurrently
-    const [countResult, sqlResult] = await Promise.all([countPromise, sqlPromise]);
+    // // Execute both promises concurrently
+    // const [countResult, sqlResult] = await Promise.all([countPromise, sqlPromise]);
    
+
+    // // Extract total items from count result
+    // const totalItems = parseInt(countResult.rows[0].totalitems, 10);
+
+    // // Extract data from SQL result
+    // const formattedResults = sqlResult.rows;
+
+    const countResult = await redshiftClient.query(countQuery);
+
+    // Execute main SQL query
+    const sqlResult = await redshiftClient.query(sqlQuery);
 
     // Extract total items from count result
     const totalItems = parseInt(countResult.rows[0].totalitems, 10);
 
     // Extract data from SQL result
     const formattedResults = sqlResult.rows;
+
 
     // Calculate total number of pages
     const totalPage = Math.ceil(totalItems / 10);
