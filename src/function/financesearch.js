@@ -1,31 +1,5 @@
 'use strict';
-const AWS = require('aws-sdk');
 const { Client } = require('pg');
-const { v4: uuidv4 } = require('uuid');
-
-function toPascalCase(obj) {
-  if (typeof obj !== 'object' || obj === null) {
-    return obj;
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map(item => toPascalCase(item));
-  }
-
-  return Object.keys(obj).reduce((acc, key) => {
-    const pascalKey = key.replace(/(\w)(\w*)/g, (match, firstChar, rest) => {
-      return firstChar.toUpperCase() + rest.toLowerCase();
-    }).replace(/\s+/g, ''); // Remove spaces between keys
-    
-    let value = obj[key];
-    if (value instanceof Date) {
-      value = value.toISOString(); // Convert Date objects to ISO string
-    }
-    
-    acc[pascalKey] = toPascalCase(value); // Recursively apply toPascalCase
-    return acc;
-  }, {});
-}
 
 exports.handler = async (event) => {
   try {
@@ -73,7 +47,8 @@ exports.handler = async (event) => {
 
     // Connect to the Redshift cluster
     await redshiftClient.connect();
-    
+
+    // Define count query
     const countQuery = `
       SELECT COUNT(*) AS totalItems
       FROM datamart.ap_invoices a
@@ -82,48 +57,38 @@ exports.handler = async (event) => {
       AND a."file number" = b."file number"
       ${whereClause}`;
 
-    // Execute the count query as a promise
-    const countResult = await new Promise((resolve, reject) => {
-      redshiftClient.query(countQuery, (err, res) => {
-        if (err) reject(err);
-        else resolve(res);
-      });
-    });
-
-    const totalItems = parseInt(countResult.rows[0].totalitems, 10);
-
-    // Construct the SQL query with the dynamic WHERE clause, sorting, and pagination
+    // Define main SQL query
     const sqlQuery = `
       SELECT
-        a."source system",
-        a."file number",
-        b."house waybill",
-        b."master waybill",
-        a."file date",
-        a.division,
-        a."invoice number",
-        a."vendor id",
-        a."vendor name",
-        a."service id",
-        a."vendor invoice nbr",
-        a."invoice sequence number",
-        a."revenue station",
-        a."controlling station",
-        a."bill to number",
-        a."bill to customer",
-        a."sales rep",
-        a."account manager",
-        a."consol number",
-        a."charge code",
-        a."invoice date",
-        a."finalized date",
-        a."vendor complete date",
-        a."finalized by",
-        a."updated by",
-        a.tax,
-        a.total,
-        a.currency,
-        a."original total"
+        a."source system" AS Source_System,
+        a."file number" AS File_Number,
+        b."house waybill" AS House_Waybill,
+        b."master waybill" AS Master_Waybill,
+        a."file date" AS File_Date,
+        a.division AS Division,
+        a."invoice number" AS Invoice_Number,
+        a."vendor id" AS Vendor_Id,
+        a."vendor name" AS Vendor_Name,
+        a."service id" AS Service_Id,
+        a."vendor invoice nbr" AS Vendor_Invoice_Number,
+        a."invoice sequence number" AS Invoice_Sequence_Number,
+        a."revenue station" AS Revenue_Station,
+        a."controlling station" AS Controlling_Station,
+        a."bill to number" AS Bill_To_Number,
+        a."bill to customer" AS Bill_To_Customer,
+        a."sales rep" AS Sales_Rep,
+        a."account manager" AS Account_Manager,
+        a."consol number" AS Consol_Number,
+        a."charge code" AS Charge_Code,
+        a."invoice date" AS Invoice_Date,
+        a."finalized date" AS Finalized_Date,
+        a."vendor complete date" AS Vendor_Complete_Date,
+        a."finalized by" AS Finalized_By,
+        a."updated by" AS Updated_By,
+        a.tax AS Tax,
+        a.total AS Total,
+        a.currency AS Currency,
+        a."original total" AS Original_Total
       FROM
         datamart.ap_invoices a
       JOIN
@@ -135,23 +100,37 @@ exports.handler = async (event) => {
       ORDER BY
         ${SortBy || 'a."invoice date"'} ${Ascending ? 'ASC' : 'DESC'}
       LIMIT
-        ${PageSize || 10}  -- Default page size is 10
+        ${PageSize || 10} -- Default page size is 10
       OFFSET
         ${offset}`;
 
-    // Execute the SQL query
-    const result = await redshiftClient.query(sqlQuery);
-    const formattedResults = [];
-    for (const row of result.rows) {
-        const formattedRow = { ...toPascalCase(row) };
-        formattedRow.uniqueId = uuidv4(); // Generate UUID for each row
-        formattedResults.push(formattedRow);
-    }
+    // Define promises for count query and main SQL query
+    const countPromise = new Promise((resolve, reject) => {
+      redshiftClient.query(countQuery, (err, res) => {
+        if (err) reject(err);
+        else resolve(res);
+      });
+    });
+
+    const sqlPromise = new Promise((resolve, reject) => {
+      redshiftClient.query(sqlQuery, (err, res) => {
+        if (err) reject(err);
+        else resolve(res);
+      });
+    });
+
+    // Execute both promises concurrently
+    const [countResult, sqlResult] = await Promise.all([countPromise, sqlPromise]);
+   
+
+    // Extract total items from count result
+    const totalItems = parseInt(countResult.rows[0].totalitems, 10);
+
+    // Extract data from SQL result
+    const formattedResults = sqlResult.rows;
 
     // Calculate total number of pages
     const totalPage = Math.ceil(totalItems / 10);
-
-    const pascalCaseResults = toPascalCase(formattedResults);
 
     // Close the connection to the Redshift cluster
     await redshiftClient.end();
@@ -159,7 +138,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        data: pascalCaseResults,
+        data: formattedResults,
         currentPage: parseInt(Page, 10) || 1,
         totalItems,
         totalPage,
