@@ -17,6 +17,9 @@ exports.handler = async (event) => {
     // Calculate the offset based on the page number and page size
     const offset = (parseInt(Page, 10) - 1) * (PageSize || 10) || 0;
 
+    // Set default page size to 10 if not specified
+    const adjustedPageSize = PageSize ? Math.min(parseInt(PageSize, 10), 100) : 10;
+
     // Construct the WHERE clause based on the provided parameters
     const whereConditions = ['a.is_deleted = \'N\'AND a."invoice date" IS NOT NULL']; // Always include the mandatory condition
 
@@ -60,6 +63,7 @@ exports.handler = async (event) => {
     // Define main SQL query
     const sqlQuery = `
       SELECT
+        a."source system" || '-' || a."file number" || '-' || b."house waybill" || '-' || b."master waybill" AS Id,
         a."source system" AS Source_System,
         a."file number" AS File_Number,
         b."house waybill" AS House_Waybill,
@@ -100,34 +104,9 @@ exports.handler = async (event) => {
       ORDER BY
         ${SortBy || 'a."invoice date"'} ${Ascending ? 'ASC' : 'DESC'}
       LIMIT
-        ${PageSize || 10} -- Default page size is 10
+        ${adjustedPageSize} -- Use the adjusted PageSize here
       OFFSET
         ${offset}`;
-
-    // // Define promises for count query and main SQL query
-    // const countPromise = new Promise((resolve, reject) => {
-    //   redshiftClient.query(countQuery, (err, res) => {
-    //     if (err) reject(err);
-    //     else resolve(res);
-    //   });
-    // });
-
-    // const sqlPromise = new Promise((resolve, reject) => {
-    //   redshiftClient.query(sqlQuery, (err, res) => {
-    //     if (err) reject(err);
-    //     else resolve(res);
-    //   });
-    // });
-
-    // // Execute both promises concurrently
-    // const [countResult, sqlResult] = await Promise.all([countPromise, sqlPromise]);
-   
-
-    // // Extract total items from count result
-    // const totalItems = parseInt(countResult.rows[0].totalitems, 10);
-
-    // // Extract data from SQL result
-    // const formattedResults = sqlResult.rows;
 
     const countResult = await redshiftClient.query(countQuery);
 
@@ -140,9 +119,8 @@ exports.handler = async (event) => {
     // Extract data from SQL result
     const formattedResults = sqlResult.rows;
 
-
     // Calculate total number of pages
-    const totalPage = Math.ceil(totalItems / 10);
+    const totalPage = Math.ceil(totalItems / adjustedPageSize);
 
     // Close the connection to the Redshift cluster
     await redshiftClient.end();
@@ -154,7 +132,7 @@ exports.handler = async (event) => {
         currentPage: parseInt(Page, 10) || 1,
         totalItems,
         totalPage,
-        size: formattedResults.length,
+        Recordsfetched: formattedResults.length,
       }),
     };
   } catch (error) {
