@@ -9,16 +9,16 @@ exports.handler = async (event) => {
       FileNumber,
       CreatedDate,
       Page,
-      PageSize,
+      Size,
       SortBy,
       Ascending = false,
     } = event.queryStringParameters || {};
 
     // Calculate the offset based on the page number and page size
-    const offset = (parseInt(Page, 10) - 1) * (PageSize || 10) || 0;
+    const offset = (parseInt(Page, 10) - 1) * (Size || 10) || 0;
 
     // Set default page size to 10 if not specified
-    const adjustedPageSize = PageSize ? Math.min(parseInt(PageSize, 10), 100) : 10;
+    const adjustedPageSize = Size ? Math.min(parseInt(Size, 10), 100) : 10;
 
     // Construct the WHERE clause based on the provided parameters
     const whereConditions = ['a.is_deleted = \'N\'AND a."invoice date" IS NOT NULL']; // Always include the mandatory condition
@@ -108,11 +108,14 @@ exports.handler = async (event) => {
       OFFSET
         ${offset}`;
 
-    const countResult = await redshiftClient.query(countQuery);
+    // const countResult = await redshiftClient.query(countQuery);
 
     // Execute main SQL query
-    const sqlResult = await redshiftClient.query(sqlQuery);
-
+    // const sqlResult = await redshiftClient.query(sqlQuery);
+    const [countResult, sqlResult] = await Promise.all([
+      await redshiftClient.query(countQuery),
+      await redshiftClient.query(sqlQuery),
+    ]);
     // Extract total items from count result
     const totalItems = parseInt(countResult.rows[0].totalitems, 10);
 
@@ -127,18 +130,29 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE',
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        data: formattedResults,
-        currentPage: parseInt(Page, 10) || 1,
-        totalItems,
-        totalPage,
-        Recordsfetched: formattedResults.length,
+        Data: formattedResults,
+        CurrentPage: parseInt(Page, 10) || 1,
+        TotalPage: totalPage,
+        Size: formattedResults.length,
       }),
     };
   } catch (error) {
     console.error('Error:', error);
     return {
       statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE',
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ error: 'Internal Server Error' }),
     };
   }
