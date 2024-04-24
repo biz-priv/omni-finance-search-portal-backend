@@ -68,7 +68,7 @@ exports.handler = async (event) => {
         a."file number" AS File_Number,
         b."house waybill" AS House_Waybill,
         b."master waybill" AS Master_Waybill,
-        a."file date" AS File_Date,
+        TO_CHAR(a."file date" , 'YYYY-MM-DD HH24:MI:SS') as File_Date,
         a.division AS Division,
         a."invoice number" AS Invoice_Number,
         a."vendor id" AS Vendor_Id,
@@ -84,9 +84,9 @@ exports.handler = async (event) => {
         a."account manager" AS Account_Manager,
         a."consol number" AS Consol_Number,
         a."charge code" AS Charge_Code,
-        a."invoice date" AS Invoice_Date,
-        a."finalized date" AS Finalized_Date,
-        a."vendor complete date" AS Vendor_Complete_Date,
+        TO_CHAR(a."invoice date" , 'YYYY-MM-DD HH24:MI:SS') as Invoice_Date,
+        TO_CHAR(a."finalized date" , 'YYYY-MM-DD HH24:MI:SS') as Finalized_Date,
+        TO_CHAR(a."vendor complete date" , 'YYYY-MM-DD HH24:MI:SS') as Vendor_Complete_Date,
         a."finalized by" AS Finalized_By,
         a."updated by" AS Updated_By,
         a.tax AS Tax,
@@ -108,10 +108,8 @@ exports.handler = async (event) => {
       OFFSET
         ${offset}`;
 
-    // const countResult = await redshiftClient.query(countQuery);
-
     // Execute main SQL query
-    // const sqlResult = await redshiftClient.query(sqlQuery);
+
     const [countResult, sqlResult] = await Promise.all([
       await redshiftClient.query(countQuery),
       await redshiftClient.query(sqlQuery),
