@@ -1,6 +1,7 @@
 'use strict';
 const { Client } = require('pg');
 
+
 exports.handler = async (event) => {
   let redshiftClient;
   try {
@@ -25,6 +26,8 @@ exports.handler = async (event) => {
     // Set default page size to 10 if not specified
     const adjustedPageSize = Size ? Math.min(parseInt(Size, 10), 100) : 10;
 
+    const regex = /(\d{4}-\d{2}-\d{2})/g;
+
     // Construct the WHERE clause based on the provided parameters
     const whereConditions = ['a.is_deleted = \'N\'AND a."invoice date" IS NOT NULL']; // Always include the mandatory condition
 
@@ -34,9 +37,18 @@ exports.handler = async (event) => {
     if (FileNumber) {
       whereConditions.push(`a."file number" = '${FileNumber}'`);
     }
-    if (CreatedDate) {
-      whereConditions.push(`a."file date" = '${CreatedDate}'`);
-    }    
+    // start_date, end_date = re.findall(r'(\d{4}-\d{2}-\d{2})', CreatedDate)
+
+    const matches = CreatedDate.match(regex);
+    const StartDate = matches[0];
+    const EndDate = matches[1];
+    if (StartDate && EndDate) {
+      whereConditions.push(`a."file date" >= '${StartDate}' AND a."file date" <= '${EndDate}'`);
+    }
+
+    // if (CreatedDate) {
+    //   whereConditions.push(`a."file date" = '${CreatedDate}'`);
+    // }
     if (HouseWayBill) {
       whereConditions.push(`a."house waybill" = '${HouseWayBill}'`);
     }
