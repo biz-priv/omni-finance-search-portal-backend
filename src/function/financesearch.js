@@ -2,6 +2,7 @@
 const { Client } = require('pg');
 
 exports.handler = async (event) => {
+  let redshiftClient;
   try {
     // Extract input parameters from the API request
     const {
@@ -46,7 +47,7 @@ exports.handler = async (event) => {
     };
 
     // Create a new Redshift client
-    const redshiftClient = new Client(redshiftParams);
+    redshiftClient = new Client(redshiftParams);
 
     // Connect to the Redshift cluster
     await redshiftClient.connect();
@@ -138,7 +139,7 @@ exports.handler = async (event) => {
         Data: formattedResults,
         CurrentPage: parseInt(Page, 10) || 1,
         TotalPage: totalPage,
-        Size: formattedResults.length,
+        Size,
       }),
     };
   } catch (error) {
@@ -153,5 +154,9 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({ error: 'Internal Server Error' }),
     };
+  } finally {
+    if (redshiftClient) {
+      await redshiftClient.end();
+    }
   }
 };
