@@ -9,6 +9,10 @@ exports.handler = async (event) => {
       SourceSystem,
       FileNumber,
       CreatedDate,
+      HouseWayBill,
+      MasterBill,
+      VendorID,
+      InvoiceNumber,
       Page,
       Size,
       SortBy,
@@ -32,6 +36,18 @@ exports.handler = async (event) => {
     }
     if (CreatedDate) {
       whereConditions.push(`a."file date" = '${CreatedDate}'`);
+    }    
+    if (HouseWayBill) {
+      whereConditions.push(`a."house waybill" = '${HouseWayBill}'`);
+    }
+    if (MasterBill) {
+      whereConditions.push(`b."master waybill" = '${MasterBill}'`);
+    }
+    if (VendorID) {
+      whereConditions.push(`a."vendor id" = '${VendorID}'`);
+    }
+    if (InvoiceNumber) {
+      whereConditions.push(`a."invoice number" = '${InvoiceNumber}'`);
     }
 
     // Construct the WHERE clause string
@@ -64,36 +80,36 @@ exports.handler = async (event) => {
     // Define main SQL query
     const sqlQuery = `
       SELECT
-        a."source system" || '-' || a."file number" || '-' || b."house waybill" || '-' || b."master waybill" AS Id,
-        a."source system" AS Source_System,
-        a."file number" AS File_Number,
-        b."house waybill" AS House_Waybill,
-        b."master waybill" AS Master_Waybill,
-        TO_CHAR(a."file date" , 'YYYY-MM-DD HH24:MI:SS') as File_Date,
-        a.division AS Division,
-        a."invoice number" AS Invoice_Number,
-        a."vendor id" AS Vendor_Id,
-        a."vendor name" AS Vendor_Name,
-        a."service id" AS Service_Id,
-        a."vendor invoice nbr" AS Vendor_Invoice_Number,
-        a."invoice sequence number" AS Invoice_Sequence_Number,
-        a."revenue station" AS Revenue_Station,
-        a."controlling station" AS Controlling_Station,
-        a."bill to number" AS Bill_To_Number,
-        a."bill to customer" AS Bill_To_Customer,
-        a."sales rep" AS Sales_Rep,
-        a."account manager" AS Account_Manager,
-        a."consol number" AS Consol_Number,
-        a."charge code" AS Charge_Code,
-        TO_CHAR(a."invoice date" , 'YYYY-MM-DD HH24:MI:SS') as Invoice_Date,
-        TO_CHAR(a."finalized date" , 'YYYY-MM-DD HH24:MI:SS') as Finalized_Date,
-        TO_CHAR(a."vendor complete date" , 'YYYY-MM-DD HH24:MI:SS') as Vendor_Complete_Date,
-        a."finalized by" AS Finalized_By,
-        a."updated by" AS Updated_By,
-        a.tax AS Tax,
-        a.total AS Total,
-        a.currency AS Currency,
-        a."original total" AS Original_Total
+        a."source system" || '-' || a."file number" || '-' || b."house waybill" || '-' || b."master waybill" || '-' || a."invoice number"  || || '-' || a."vendor id" || || '-' || a."service id" || || '-' || a."vendor invoice nbr" || || '-' || a."consol number" || AS id,
+        a."source system" AS source_system,
+        a."file number" AS file_number,
+        b."house waybill" AS house_waybill,
+        b."master waybill" AS master_waybill,
+        TO_CHAR(a."file date" , 'YYYY-MM-DD HH24:MI:SS') as file_date,
+        a.division AS division,
+        a."invoice number" AS invoice_number,
+        a."vendor id" AS vendor_id,
+        a."vendor name" AS vendor_name,
+        a."service id" AS service_id,
+        a."vendor invoice nbr" AS vendor_invoice_number,
+        a."invoice sequence number" AS invoice_sequence_number,
+        a."revenue station" AS revenue_station,
+        a."controlling station" AS controlling_station,
+        a."bill to number" AS bill_to_number,
+        a."bill to customer" AS bill_to_customer,
+        a."sales rep" AS sales_rep,
+        a."account manager" AS account_manager,
+        a."consol number" AS consol_number,
+        a."charge code" AS charge_code,
+        TO_CHAR(a."invoice date" , 'YYYY-MM-DD HH24:MI:SS') as invoice_date,
+        TO_CHAR(a."finalized date" , 'YYYY-MM-DD HH24:MI:SS') as finalized_date,
+        TO_CHAR(a."vendor complete date" , 'YYYY-MM-DD HH24:MI:SS') as vendor_complete_date,
+        a."finalized by" AS finalized_by,
+        a."updated by" AS updated_by,
+        a.tax AS tax,
+        a.total AS total,
+        a.currency AS currency,
+        a."original total" AS original_total
       FROM
         datamart.ap_invoices a
       JOIN
