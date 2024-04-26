@@ -1,7 +1,6 @@
 'use strict';
 const { Client } = require('pg');
 
-
 exports.handler = async (event) => {
   let redshiftClient;
   try {
@@ -20,13 +19,20 @@ exports.handler = async (event) => {
       Ascending = false,
     } = event.queryStringParameters || {};
 
+    let startDate; let endDate;
+    if (CreatedDate) {
+      const matches = CreatedDate.match(/(\d{4}-\d{2}-\d{2})/g);
+      if (matches && matches.length >= 2) {
+        startDate = matches[0];
+        endDate = matches[1];
+      }
+    }
+
     // Calculate the offset based on the page number and page size
     const offset = (parseInt(Page, 10) - 1) * (Size || 10) || 0;
 
     // Set default page size to 10 if not specified
     const adjustedPageSize = Size ? Math.min(parseInt(Size, 10), 100) : 10;
-
-    const regex = /(\d{4}-\d{2}-\d{2})/g;
 
     // Construct the WHERE clause based on the provided parameters
     const whereConditions = ['a.is_deleted = \'N\'AND a."invoice date" IS NOT NULL']; // Always include the mandatory condition
@@ -37,18 +43,11 @@ exports.handler = async (event) => {
     if (FileNumber) {
       whereConditions.push(`a."file number" = '${FileNumber}'`);
     }
-    // start_date, end_date = re.findall(r'(\d{4}-\d{2}-\d{2})', CreatedDate)
 
-    const matches = CreatedDate.match(regex);
-    const StartDate = matches[0];
-    const EndDate = matches[1];
-    if (StartDate && EndDate) {
-      whereConditions.push(`a."file date" >= '${StartDate}' AND a."file date" <= '${EndDate}'`);
+    if (startDate && endDate) {
+      whereConditions.push(`a."file date" >= '${startDate}' AND a."file date" <= '${endDate}'`);
     }
 
-    // if (CreatedDate) {
-    //   whereConditions.push(`a."file date" = '${CreatedDate}'`);
-    // }
     if (HouseWayBill) {
       whereConditions.push(`a."house waybill" = '${HouseWayBill}'`);
     }
@@ -92,7 +91,7 @@ exports.handler = async (event) => {
     // Define main SQL query
     const sqlQuery = `
       SELECT
-        a."source system" || '-' || a."file number" || '-' || b."house waybill" || '-' || b."master waybill" || '-' || a."invoice number"  || || '-' || a."vendor id" || || '-' || a."service id" || || '-' || a."vendor invoice nbr" || || '-' || a."consol number" || AS id,
+a."source system" || '-' || a."file number" || '-' || b."house waybill" || '-' || b."master waybill" || '-' || a."invoice number" || '-' || a."vendor id" || '-' || a."service id" || '-' || a."vendor invoice nbr" || '-' || a."consol number" AS id,
         a."source system" AS source_system,
         a."file number" AS file_number,
         b."house waybill" AS house_waybill,
