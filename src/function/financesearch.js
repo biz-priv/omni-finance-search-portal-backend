@@ -8,7 +8,8 @@ exports.handler = async (event) => {
     const {
       SourceSystem,
       FileNumber,
-      CreatedDate,
+      StartDate,
+      EndDate,
       HouseWayBill,
       MasterBill,
       VendorID,
@@ -19,14 +20,14 @@ exports.handler = async (event) => {
       Ascending = false,
     } = event.queryStringParameters || {};
 
-    let startDate; let endDate;
-    if (CreatedDate) {
-      const matches = CreatedDate.match(/(\d{4}-\d{2}-\d{2})/g);
-      if (matches && matches.length >= 2) {
-        startDate = matches[0];
-        endDate = matches[1];
-      }
-    }
+    // let startDate; let endDate;
+    // if (CreatedDate) {
+    //   const matches = CreatedDate.match(/(\d{4}-\d{2}-\d{2})/g);
+    //   if (matches && matches.length >= 2) {
+    //     startDate = matches[0];
+    //     endDate = matches[1];
+    //   }
+    // }
 
     // Calculate the offset based on the page number and page size
     const offset = (parseInt(Page, 10) - 1) * (Size || 10) || 0;
@@ -44,8 +45,8 @@ exports.handler = async (event) => {
       whereConditions.push(`a."file number" = '${FileNumber}'`);
     }
 
-    if (startDate && endDate) {
-      whereConditions.push(`a."file date" >= '${startDate}' AND a."file date" <= '${endDate}'`);
+    if (StartDate && EndDate) {
+      whereConditions.push(`a."file date" >= '${StartDate}' AND a."file date" <= '${EndDate}'`);
     }
 
     if (HouseWayBill) {
