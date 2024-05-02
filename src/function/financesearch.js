@@ -1,5 +1,7 @@
 'use strict';
 const { Client } = require('pg');
+const { getKey } = require('../shared/helper');
+const { getRedisData, setRedisData } = require('../shared/redis-functions');
 
 exports.handler = async (event) => {
   let redshiftClient;
@@ -19,6 +21,41 @@ exports.handler = async (event) => {
       SortBy,
       Ascending = false,
     } = event.queryStringParameters || {};
+
+    const keyForRedis = getKey({
+      SourceSystem,
+      FileNumber,
+      StartDate,
+      EndDate,
+      HouseWayBill,
+      MasterBill,
+      VendorID,
+      InvoiceNumber,
+      Page,
+      Size,
+      SortBy,
+      Ascending,
+    });
+    console.info(
+      '🙂 -> file: financesearch.js:25 -> exports.handler= -> keyForRedis:',
+      keyForRedis
+    );
+
+    const redisRes = await getRedisData({ key: keyForRedis });
+    console.info('🙂 -> file: financesearch.js:42 -> exports.handler= -> redisRes:', redisRes);
+
+    if (redisRes) {
+      return {
+        statusCode: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(redisRes),
+      };
+    }
 
     // Calculate the offset based on the page number and page size
     const offset = (parseInt(Page, 10) - 1) * (Size || 10) || 0;
@@ -65,7 +102,8 @@ exports.handler = async (event) => {
       user: process.env.REDSHIFT_USER,
       password: process.env.REDSHIFT_PASSWORD,
       database: process.env.REDSHIFT_DATABASE,
-      host: process.env.REDSHIFT_HOST,
+      host: 'omni-dw-prod.cnimhrgrtodg.us-east-1.redshift.amazonaws.com',
+      // host: process.env.REDSHIFT_HOST,
     };
 
     // Create a new Redshift client
@@ -148,6 +186,16 @@ a."source system" || '-' || a."file number" || '-' || b."house waybill" || '-' |
 
     // Close the connection to the Redshift cluster
     await redshiftClient.end();
+
+    await setRedisData({
+      key: keyForRedis,
+      value: {
+        Data: formattedResults,
+        CurrentPage: parseInt(Page, 10) || 1,
+        TotalPage: totalPage,
+        Size,
+      },
+    });
 
     return {
       statusCode: 200,

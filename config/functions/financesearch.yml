@@ -10,6 +10,7 @@ function:
     patterns:
       - '!**/*'
       - src/function/financesearch.js
+      - src/shared/**
   events:
     - http:
         path: /search

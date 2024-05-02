@@ -35,6 +35,9 @@ provider:
 package:
   individually: true
 
+plugins:
+  - serverless-offline
+
 functions:
   omni-finance-search: ${file(config/functions/financesearch.yml):function}
 
