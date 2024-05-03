@@ -9,7 +9,6 @@ function getKey(params = {}) {
       }
       return acc;
     }, {});
-    console.info('🙂 -> file: helper.js:12 -> filteredObject -> filteredObject:', filteredObject);
     const keyValue = Object.entries(filteredObject).map(([key, value]) => `${key}=${value}`);
     return ['root', ...keyValue].join(':');
   }

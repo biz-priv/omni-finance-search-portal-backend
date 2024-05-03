@@ -7,6 +7,7 @@ function:
   layers:
     - !Ref NodeModulesLambdaLayer
   package:
+    individually: true
     patterns:
       - '!**/*'
       - src/function/financesearch.js

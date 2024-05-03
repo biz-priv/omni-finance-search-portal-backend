@@ -36,6 +36,7 @@ exports.handler = async (event) => {
       SortBy,
       Ascending,
     });
+    
     console.info(
       '🙂 -> file: financesearch.js:25 -> exports.handler= -> keyForRedis:',
       keyForRedis
@@ -102,8 +103,8 @@ exports.handler = async (event) => {
       user: process.env.REDSHIFT_USER,
       password: process.env.REDSHIFT_PASSWORD,
       database: process.env.REDSHIFT_DATABASE,
-      host: 'omni-dw-prod.cnimhrgrtodg.us-east-1.redshift.amazonaws.com',
-      // host: process.env.REDSHIFT_HOST,
+      // host: 'omni-dw-prod.cnimhrgrtodg.us-east-1.redshift.amazonaws.com',
+      host: process.env.REDSHIFT_HOST,
     };
 
     // Create a new Redshift client
@@ -175,6 +176,7 @@ a."source system" || '-' || a."file number" || '-' || b."house waybill" || '-' |
       await redshiftClient.query(countQuery),
       await redshiftClient.query(sqlQuery),
     ]);
+    console.info('🙂 -> file: financesearch.js:178 -> exports.handler= -> countQuery, sqlQuery:', countQuery, sqlQuery);
     // Extract total items from count result
     const totalItems = parseInt(countResult.rows[0].totalitems, 10);
 

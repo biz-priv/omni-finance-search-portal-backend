@@ -1,4 +1,4 @@
-service: omni-finance-search-portal # Change this to your service name
+service: omni-finance-search-portal-backend # Change this to your service name
 
 provider:
   name: aws
