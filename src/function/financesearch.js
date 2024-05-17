@@ -16,8 +16,8 @@ exports.handler = async (event) => {
       MasterBill,
       VendorID,
       InvoiceNumber,
-      Page,
-      Size,
+      Page = 1,
+      Size = 10,
       SortBy,
       Ascending = false,
     } = event.queryStringParameters || {};
@@ -36,7 +36,7 @@ exports.handler = async (event) => {
       SortBy,
       Ascending,
     });
-    
+
     console.info(
       '🙂 -> file: financesearch.js:25 -> exports.handler= -> keyForRedis:',
       keyForRedis
@@ -58,14 +58,15 @@ exports.handler = async (event) => {
       };
     }
 
+    const adjustedPageSize = parseInt(Size, 10);
+
     // Calculate the offset based on the page number and page size
-    const offset = (parseInt(Page, 10) - 1) * (Size || 10) || 0;
+    const offset = (parseInt(Page, 10) - 1) * adjustedPageSize ?? 0;
 
     // Set default page size to 10 if not specified
-    const adjustedPageSize = Size ? Math.min(parseInt(Size, 10), 100) : 10;
 
     // Construct the WHERE clause based on the provided parameters
-    const whereConditions = ['a.is_deleted = \'N\'AND a."invoice date" IS NOT NULL']; // Always include the mandatory condition
+    const whereConditions = ['a.is_deleted = \'N\'AND a."finalized date" IS NOT NULL']; // Always include the mandatory condition
 
     if (SourceSystem) {
       whereConditions.push(`a."source system" = '${SourceSystem}'`);
@@ -176,7 +177,11 @@ a."source system" || '-' || a."file number" || '-' || b."house waybill" || '-' |
       await redshiftClient.query(countQuery),
       await redshiftClient.query(sqlQuery),
     ]);
-    console.info('🙂 -> file: financesearch.js:178 -> exports.handler= -> countQuery, sqlQuery:', countQuery, sqlQuery);
+    console.info(
+      '🙂 -> file: financesearch.js:178 -> exports.handler= -> countQuery, sqlQuery:',
+      countQuery,
+      sqlQuery
+    );
     // Extract total items from count result
     const totalItems = parseInt(countResult.rows[0].totalitems, 10);
 
