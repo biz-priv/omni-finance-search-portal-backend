@@ -1,0 +1,19 @@
+---
+function:
+  name: redisconntest-${self:provider.stage}
+  handler: src/function/redisconntest.handler
+  memorySize: 2048
+  timeout: 900
+  layers:
+    - !Ref NodeModulesLambdaLayer
+  package:
+    individually: true
+    patterns:
+      - '!**/*'
+      - src/function/redisconntest.js
+      - src/shared/**
+  environment:
+    REGION: ${self:provider.region}
+    STAGE: ${self:provider.stage}
+    # ERROR_SNS_TOPIC_ARN: ${ssm:/omni-reports/${self:provider.stage}/error-notification/sns/arn}
+
