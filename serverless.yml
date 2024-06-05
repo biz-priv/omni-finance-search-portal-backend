@@ -49,3 +49,34 @@ layers:
     compatibleRuntimes:
       - nodejs20.x
     retain: false
+
+resources:
+  Resources:
+    ServerlessStorageSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Ingress for Redis Cluster
+        VpcId: vpc-ed4b2288
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 6379
+            ToPort: 6379
+            SourceSecurityGroupId: ${ssm:/omni-dw/${self:provider.stage}/lambda/sgId}
+    ServerlessCacheSubnetGroup:
+      Type: AWS::ElastiCache::SubnetGroup
+      Properties:
+        Description: 'Cache Subnet Group'
+        SubnetIds: 
+          - ${ssm:/omni-dw/${self:provider.stage}/lambda/subnetA}
+    ServerlessElasticacheCluster:
+      DependsOn: ServerlessStorageSecurityGroup
+      Type: AWS::ElastiCache::CacheCluster
+      Properties:
+        AutoMinorVersionUpgrade: true
+        Engine: redis
+        CacheNodeType: cache.t2.micro
+        NumCacheNodes: 1
+        VpcSecurityGroupIds:
+          - 'Fn::GetAtt': ServerlessStorageSecurityGroup.GroupId
+        CacheSubnetGroupName:
+          Ref: ServerlessCacheSubnetGroup
