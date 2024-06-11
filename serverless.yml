@@ -65,6 +65,6 @@ resources:
     HelloWorldBatchServiceRole: ${file(config/batch/computeEnvironment.yml):HelloWorldBatchServiceRole}
     HelloWorldComputeEnvironment: ${file(config/batch/computeEnvironment.yml):HelloWorldComputeEnvironment}
     HelloWorldJobQueue: ${file(config/batch/redisSampleJobQueue.yml):HelloWorldJobQueue}
-    HelloWorldBatchTaskExecutionRole: ${file(config/batch/redisSampleJob.yml):OmniRtBatchTaskExecutionRole}
-    HelloWorldJobDefinition: ${file(config/batch/redisSampleJob.yml):ShipmentHeaderJobDefinition}
-    HelloWorldBatchLogGroup: ${file(config/batch/redisSampleJob.yml):ShipmentHeaderBatchLogGroup}
+    HelloWorldBatchTaskExecutionRole: ${file(config/batch/redisSampleJob.yml):HelloWorldBatchTaskExecutionRole}
+    HelloWorldJobDefinition: ${file(config/batch/redisSampleJob.yml):HelloWorldJobDefinition}
+    HelloWorldBatchLogGroup: ${file(config/batch/redisSampleJob.yml):HelloWorldBatchLogGroup}
