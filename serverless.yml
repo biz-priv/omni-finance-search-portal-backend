@@ -27,6 +27,8 @@ provider:
   environment:
     STAGE: ${self:provider.stage}
     ERROR_SNS_TOPIC_ARN: ${ssm:/omni-reports/${self:provider.stage}/error-notification/sns/arn}
+    # REDIS_ENDPOINT: finance-search-portal-redis-1-dev.cbgmpe.ng.0001.use1.cache.amazonaws.com:6379
+    REDIS_ENDPOINT: ${ssm:/omni-finance-search-portal/${self:provider.stage}/redis-endpoint}
 
   deploymentBucket:
     name: ${ssm:/omni-dw/${self:provider.stage}/sls/deployment/bucket}
@@ -39,7 +41,8 @@ plugins:
   - serverless-offline
 
 functions:
-  omni-finance-search: ${file(config/functions/financesearch.yml):function}
+  omni-finance-search: ${file(config/functions/search.yml):function}
+  omni-finance-redis-loader: ${file(config/functions/redis-loader.yml):function}
 
 layers:
   NodeModules:
@@ -49,34 +52,3 @@ layers:
     compatibleRuntimes:
       - nodejs20.x
     retain: false
-
-resources:
-  Resources:
-    ServerlessStorageSecurityGroup:
-      Type: AWS::EC2::SecurityGroup
-      Properties:
-        GroupDescription: Ingress for Redis Cluster
-        VpcId: vpc-ed4b2288
-        SecurityGroupIngress:
-          - IpProtocol: tcp
-            FromPort: 6379
-            ToPort: 6379
-            SourceSecurityGroupId: ${ssm:/omni-dw/${self:provider.stage}/lambda/sgId}
-    ServerlessCacheSubnetGroup:
-      Type: AWS::ElastiCache::SubnetGroup
-      Properties:
-        Description: 'Cache Subnet Group'
-        SubnetIds: 
-          - ${ssm:/omni-dw/${self:provider.stage}/lambda/subnetA}
-    ServerlessElasticacheCluster:
-      DependsOn: ServerlessStorageSecurityGroup
-      Type: AWS::ElastiCache::CacheCluster
-      Properties:
-        AutoMinorVersionUpgrade: true
-        Engine: redis
-        CacheNodeType: cache.t2.micro
-        NumCacheNodes: 1
-        VpcSecurityGroupIds:
-          - 'Fn::GetAtt': ServerlessStorageSecurityGroup.GroupId
-        CacheSubnetGroupName:
-          Ref: ServerlessCacheSubnetGroup

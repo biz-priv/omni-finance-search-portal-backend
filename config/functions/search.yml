@@ -1,16 +1,16 @@
 ---
 function:
-  name: financesearch-${self:provider.stage}
-  handler: src/function/financesearch.handler
+  name: finance-search-${self:provider.stage}
+  handler: src/function/search.handler
   memorySize: 2048
-  timeout: 900
+  timeout: 30
   layers:
     - !Ref NodeModulesLambdaLayer
   package:
     individually: true
     patterns:
       - '!**/*'
-      - src/function/financesearch.js
+      - src/function/search.js
       - src/shared/**
   events:
     - http:

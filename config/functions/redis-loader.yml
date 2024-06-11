@@ -1,0 +1,28 @@
+---
+function:
+  name: finance-redis-loader-${self:provider.stage}
+  handler: src/function/redis-loader.handler
+  memorySize: 2048
+  timeout: 900
+  layers:
+    - !Ref NodeModulesLambdaLayer
+  package:
+    individually: true
+    patterns:
+      - '!**/*'
+      - src/function/redis-loader.js
+      - src/shared/**
+  # events:
+  #   - http:
+  #       path: /search
+  #       method: get
+  #       cors: true
+  environment:
+    REGION: ${self:provider.region}
+    STAGE: ${self:provider.stage}
+    ERROR_SNS_TOPIC_ARN: ${ssm:/omni-reports/${self:provider.stage}/error-notification/sns/arn}
+    REDSHIFT_HOST: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/host}
+    REDSHIFT_PORT: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/port}
+    REDSHIFT_USER: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/user}
+    REDSHIFT_PASSWORD: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/password}
+    REDSHIFT_DATABASE: ${ssm:/omni-eco-transit/${self:provider.stage}/redshift/database}
