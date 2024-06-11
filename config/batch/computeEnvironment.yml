@@ -1,0 +1,29 @@
+HelloWorldBatchServiceRole:
+  Type: AWS::IAM::Role
+  Properties:
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service: batch.amazonaws.com
+          Action: sts:AssumeRole
+    ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
+
+HelloWorldComputeEnvironment:
+  Type: AWS::Batch::ComputeEnvironment
+  Properties:
+    ComputeEnvironmentName: hello-world-environment-${self:provider.stage}
+    Type: MANAGED
+    ServiceRole:
+      Ref: HelloWorldBatchServiceRole
+    ComputeResources:
+      MaxvCpus: 256
+      SecurityGroupIds:
+        - ${ssm:/omni-dw/${self:provider.stage}/lambda/sgId}
+      Type: FARGATE
+      Subnets:
+        - ${ssm:/omni-dw/${self:provider.stage}/lambda/subnetA}
+        - ${ssm:/omni-dw/${self:provider.stage}/lambda/subnetB}
+    State: ENABLED

@@ -1,0 +1,62 @@
+HelloWorldBatchTaskExecutionRole:
+  Type: AWS::IAM::Role
+  Properties:
+    RoleName: hello-world-taskexec-role-${self:provider.stage}
+    AssumeRolePolicyDocument:
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs-tasks.amazonaws.com]
+          Action: ["sts:AssumeRole"]
+    Path: /
+    Policies:
+      - PolicyName: AmazonECSTaskExecutionRolePolicy
+        PolicyDocument:
+          Statement:
+            - Effect: Allow
+              Action:
+                - "ecr:GetAuthorizationToken"
+                - "ecr:BatchCheckLayerAvailability"
+                - "ecr:GetDownloadUrlForLayer"
+                - "ecr:BatchGetImage"
+                - "logs:CreateLogStream"
+                - "logs:PutLogEvents"
+              Resource: "*"
+
+HelloWorldJobDefinition:
+  Type: AWS::Batch::JobDefinition
+  Properties:
+    JobDefinitionName: hello-world-job-definition-${self:provider.stage}
+    Type: container
+    RetryStrategy:
+      Attempts: 1
+    PlatformCapabilities:
+      - FARGATE
+    ContainerProperties:
+      Command:
+        - node
+        - server.js
+      ResourceRequirements:
+        - Value: 0.25
+          Type: VCPU
+        - Value: 512
+          Type: MEMORY
+      FargatePlatformConfiguration:
+        PlatformVersion: 1.3.0
+      LogConfiguration:
+        LogDriver: awslogs
+        Options:
+          awslogs-group: !Ref HelloWorldBatchLogGroup
+          awslogs-region: !Ref AWS::Region
+          awslogs-stream-prefix: hello-world-logs
+      ExecutionRoleArn: !GetAtt HelloWorldBatchTaskExecutionRole.Arn
+      JobRoleArn: !GetAtt HelloWorldBatchTaskExecutionRole.Arn
+      Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/hello-world:${self:provider.stage}-latest"
+      NetworkConfiguration:
+        AssignPublicIp: ENABLED
+
+HelloWorldBatchLogGroup:
+  Type: AWS::Logs::LogGroup
+  Properties:
+    LogGroupName: hello-world-log-group-${self:provider.stage}
+    RetentionInDays: 7              

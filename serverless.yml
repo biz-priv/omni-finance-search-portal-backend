@@ -24,6 +24,12 @@ provider:
         - ec2:AssignPrivateIpAddresses
         - ec2:UnassignPrivateIpAddresses
       Resource: '*'
+    - Effect: 'Allow'
+      Action:
+        - 'batch:Describe*'
+        - 'batch:List*'
+        - 'batch:SubmitJob'
+      Resource: '*'     
   environment:
     STAGE: ${self:provider.stage}
     ERROR_SNS_TOPIC_ARN: ${ssm:/omni-reports/${self:provider.stage}/error-notification/sns/arn}
@@ -52,3 +58,13 @@ layers:
     compatibleRuntimes:
       - nodejs20.x
     retain: false
+
+resources:
+  Resources:
+    # shipment header full load batch
+    HelloWorldBatchServiceRole: ${file(config/batch/computeEnvironment.yml):HelloWorldBatchServiceRole}
+    HelloWorldComputeEnvironment: ${file(config/batch/computeEnvironment.yml):HelloWorldComputeEnvironment}
+    HelloWorldJobQueue: ${file(config/batch/redisSampleJobQueue.yml):HelloWorldJobQueue}
+    HelloWorldBatchTaskExecutionRole: ${file(config/batch/redisSampleJob.yml):OmniRtBatchTaskExecutionRole}
+    HelloWorldJobDefinition: ${file(config/batch/redisSampleJob.yml):ShipmentHeaderJobDefinition}
+    HelloWorldBatchLogGroup: ${file(config/batch/redisSampleJob.yml):ShipmentHeaderBatchLogGroup}
